@@ -40,7 +40,14 @@ def create_response(
 ~~~~~~~~~~~~ API ~~~~~~~~~~~~
 """
 
+""""
+f minRating is provided as a query string parameter, only return the restaurants which have that rating or above. If there are no such restaurants, return a 404 with a descriptive message.
 
+For this exercise, you can ignore any query string parameters other than minRating and you may assume that the provided parameter will be an integer represented as a string of digits.
+
+In Postman, you can supply query string parameters writing the query string into your request url or by hitting the Params button next to Send. Doing so will automatically fill in the request url.
+
+"""
 @app.route("/")
 def hello_world():
     return create_response({"content": "hello world!"})
@@ -52,7 +59,29 @@ def mirror(name):
 
 @app.route("/restaurants", methods=['GET'])
 def get_all_restaurants():
-    return create_response({"restaurants": db.get('restaurants')})
+    restaurants = db.get('restaurants')
+    minRating = request.args.get('minRating')
+    filtered_restuarants = []
+
+    #check to see if there is a minRating param
+    if minRating is None:
+      return create_response({"restaurants": db.get('restaurants')})
+    
+    for restaurant in restaurants:
+        if restaurant['rating'] >= int(minRating):
+          filtered_restuarants.append(restaurant)
+
+    # if nothing is rated equal to or higher than minRating, return an error
+    if not filtered_restuarants:
+      return create_response(status=404, message="there are no restaurants that match your minimum rating")
+
+    return create_response({"restaurants": filtered_restuarants})
+    
+
+@app.route("/restaurants/<id>", methods=['GET'])
+def get_restaurant(id):
+  restaurant = db.getById('restaurants', int(id))
+  return create_response(restaurant)
 
 @app.route("/restaurants/<id>", methods=['DELETE'])
 def delete_restaurant(id):
